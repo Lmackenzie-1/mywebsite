@@ -2,29 +2,50 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Simple Nature Site</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simple Chat UI</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header>
-    <h1>Nature World</h1>
-    <p>Explore the beauty of nature</p>
-  </header>
+  <div class="chat-container">
+    <header class="chat-header">Chat App</header>
 
-  <main>
-    <section>
-      <h2>Mountains</h2>
-      <p>Mountains are large landforms that rise above the surrounding land.</p>
-    </section>
+    <div class="chat-box" id="chatBox">
+      <div class="message received">Hello! 👋</div>
+      <div class="message sent">Hi there!</div>
+    </div>
 
-    <section>
-      <h2>Forests</h2>
-      <p>Forests are home to many animals and plants.</p>
-    </section>
-  </main>
+    <div class="chat-input">
+      <input type="text" id="messageInput" placeholder="Type a message...">
+      <button onclick="sendMessage()">Send</button>
+    </div>
+  </div>
 
-  <footer>
-    <p>© 2026 Nature World</p>
-  </footer>
+  <script>
+    function sendMessage() {
+      const input = document.getElementById('messageInput');
+      const chatBox = document.getElementById('chatBox');
+
+      if (input.value.trim() === '') return;
+
+      const message = document.createElement('div');
+      message.classList.add('message', 'sent');
+      message.textContent = input.value;
+
+      chatBox.appendChild(message);
+      chatBox.scrollTop = chatBox.scrollHeight;
+
+      input.value = '';
+
+      // Fake reply
+      setTimeout(() => {
+        const reply = document.createElement('div');
+        reply.classList.add('message', 'received');
+        reply.textContent = 'Got it!';
+        chatBox.appendChild(reply);
+        chatBox.scrollTop = chatBox.scrollHeight;
+      }, 1000);
+    }
+  </script>
 </body>
 </html>
