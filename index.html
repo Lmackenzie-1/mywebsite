@@ -1,39 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dark Chat App</title>
-  <link rel="stylesheet" href="style.css">
-  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
-  <script defer src="app.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>GhostChat · private rooms</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+    <!-- ROOT: dynamic screens -->
+    <div id="app-root"></div>
 
-<div id="loginScreen" class="center">
-  <h2>Enter Username</h2>
-  <input id="username" placeholder="Your name">
-  <button onclick="enterApp()">Enter</button>
-</div>
-
-<div id="app" class="hidden">
-  <div class="top-bar">
-    <span id="userDisplay"></span>
-    <div>
-      <button onclick="createChat()">Create Chat</button>
-      <button onclick="joinChat()">Enter Code</button>
-    </div>
-  </div>
-
-  <div id="codeDisplay"></div>
-
-  <div class="chat-box" id="chatBox"></div>
-
-  <div class="chat-input">
-    <input id="messageInput" placeholder="Type message...">
-    <button onclick="sendMessage()">Send</button>
-  </div>
-</div>
-
+    <script src="app.js"></script>
 </body>
 </html>
