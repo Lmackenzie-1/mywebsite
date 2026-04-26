@@ -1,26 +1,82 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>GhostChat · private rooms</title>
-    <link rel="stylesheet" href="styles.css">
-    <style>
-        /* Fallback styles in case CSS doesn't load */
-        body { 
-            background: black; 
-            margin: 0; 
-            padding: 0;
-            font-family: Arial, sans-serif;
-        }
-        #app-root { 
-            width: 100%; 
-            height: 100vh; 
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chatting Website</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-    <div id="app-root"></div>
-    <script src="app.js"></script>
+  <div class="container">
+    <h1>Welcome to ChatApp</h1>
+    <div class="chat-options">
+      <button id="createChatBtn">Create Chat</button>
+      <button id="joinChatBtn">Join Chat</button>
+    </div>
+
+    <div id="chatContainer" class="hidden">
+      <div id="chatBox" class="chat-box"></div>
+      <input type="text" id="messageInput" placeholder="Type your message..." />
+      <button id="sendBtn">Send</button>
+      <button id="leaveBtn">Leave Chat</button>
+    </div>
+  </div>
+
+  <script>
+    const createBtn = document.getElementById('createChatBtn');
+    const joinBtn = document.getElementById('joinChatBtn');
+    const chatContainer = document.getElementById('chatContainer');
+    const chatBox = document.getElementById('chatBox');
+    const messageInput = document.getElementById('messageInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const leaveBtn = document.getElementById('leaveBtn');
+
+    let chatCode = '';
+
+    createBtn.onclick = () => {
+      chatCode = Math.random().toString(36).substr(2, 6).toUpperCase();
+      alert('Your chat code: ' + chatCode);
+      startChat();
+    };
+
+    joinBtn.onclick = () => {
+      chatCode = prompt('Enter chat code:');
+      if (chatCode) {
+        alert('Joined chat: ' + chatCode);
+        startChat();
+      }
+    };
+
+    function startChat() {
+      document.querySelector('.chat-options').classList.add('hidden');
+      chatContainer.classList.remove('hidden');
+    }
+
+    sendBtn.onclick = () => {
+      const message = messageInput.value.trim();
+      if (message) {
+        const messageElem = document.createElement('div');
+        messageElem.className = 'message sent';
+        messageElem.innerText = message;
+        chatBox.appendChild(messageElem);
+        messageInput.value = '';
+
+        // Simulate receiving a reply (for demo purposes)
+        setTimeout(() => {
+          const reply = document.createElement('div');
+          reply.className = 'message received';
+          reply.innerText = 'Echo: ' + message;
+          chatBox.appendChild(reply);
+          chatBox.scrollTop = chatBox.scrollHeight;
+        }, 1000);
+      }
+    };
+
+    leaveBtn.onclick = () => {
+      chatContainer.classList.add('hidden');
+      document.querySelector('.chat-options').classList.remove('hidden');
+      chatBox.innerHTML = '';
+    };
+  </script>
 </body>
 </html>
