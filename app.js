@@ -1,4 +1,4 @@
-// app.js - Fixed for Chromebook/Chrome compatibility
+// app.js - FINAL WORKING VERSION for Chromebook
 
 // STATE
 let currentScreen = 'username';
@@ -6,9 +6,6 @@ let currentUsername = '';
 let activeRoomCode = null;
 let activeRoomListener = null;
 let messagePollInterval = null;
-
-// DOM root
-const root = document.getElementById('app-root');
 
 // Helper functions
 function generateRoomCode() {
@@ -30,7 +27,6 @@ function saveRoomMessages(roomCode, messages) {
     try {
         const key = `chatroom_${roomCode}_messages`;
         localStorage.setItem(key, JSON.stringify(messages));
-        // Trigger storage event manually
         window.dispatchEvent(new StorageEvent('storage', {
             key: key,
             newValue: JSON.stringify(messages),
@@ -66,7 +62,6 @@ function startRoomSync(roomCode, onMessageUpdate) {
     window.addEventListener('storage', handler);
     activeRoomListener = handler;
     
-    // Polling fallback
     if (messagePollInterval) clearInterval(messagePollInterval);
     messagePollInterval = setInterval(() => {
         const fresh = getRoomMessages(roomCode);
@@ -85,20 +80,9 @@ function stopRoomSync() {
     }
 }
 
-// Render functions
-function render() {
-    if (!root) {
-        console.error('Root element not found!');
-        return;
-    }
-    
-    if (currentScreen === 'username') renderUsernameScreen();
-    else if (currentScreen === 'action') renderActionScreen();
-    else if (currentScreen === 'joinCodeInput') renderJoinCodeScreen();
-    else if (currentScreen === 'chat') renderChatScreen();
-}
-
+// RENDER FUNCTIONS
 function renderUsernameScreen() {
+    const root = document.getElementById('app-root');
     root.innerHTML = `
         <div class="screen">
             <div class="username-card">
@@ -121,12 +105,13 @@ function renderUsernameScreen() {
         render();
     };
     
-    btn.addEventListener('click', handleJoin);
-    input.addEventListener('keypress', (e) => { if(e.key === 'Enter') handleJoin(); });
-    input.focus();
+    btn.onclick = handleJoin;
+    input.onkeypress = (e) => { if(e.key === 'Enter') handleJoin(); };
+    setTimeout(() => input.focus(), 100);
 }
 
 function renderActionScreen() {
+    const root = document.getElementById('app-root');
     root.innerHTML = `
         <div class="screen">
             <div class="action-container">
@@ -137,7 +122,7 @@ function renderActionScreen() {
         </div>
     `;
     
-    document.getElementById('create-chat-btn').addEventListener('click', () => {
+    document.getElementById('create-chat-btn').onclick = () => {
         const newCode = generateRoomCode();
         const key = `chatroom_${newCode}_messages`;
         if (!localStorage.getItem(key)) {
@@ -146,20 +131,21 @@ function renderActionScreen() {
         activeRoomCode = newCode;
         currentScreen = 'chat';
         render();
-    });
+    };
     
-    document.getElementById('enter-code-btn').addEventListener('click', () => {
+    document.getElementById('enter-code-btn').onclick = () => {
         currentScreen = 'joinCodeInput';
         render();
-    });
+    };
 }
 
 function renderJoinCodeScreen() {
+    const root = document.getElementById('app-root');
     root.innerHTML = `
         <div class="screen">
             <div class="code-panel">
                 <h3>🔐 JOIN ROOM</h3>
-                <input type="text" id="room-code-input" class="grey-textbox" placeholder="Enter room code (e.g., A3F9K2)" autocomplete="off" maxlength="10" style="text-transform:uppercase">
+                <input type="text" id="room-code-input" class="grey-textbox" placeholder="Enter room code" autocomplete="off" maxlength="10" style="text-transform:uppercase">
                 <button id="submit-join-btn" class="primary">JOIN →</button>
                 <button id="back-action-btn" class="secondary" style="margin-top:12px">← BACK</button>
             </div>
@@ -167,8 +153,6 @@ function renderJoinCodeScreen() {
     `;
     
     const codeInput = document.getElementById('room-code-input');
-    const joinBtn = document.getElementById('submit-join-btn');
-    const backBtn = document.getElementById('back-action-btn');
     
     const attemptJoin = () => {
         let rawCode = codeInput.value.trim().toUpperCase();
@@ -187,13 +171,13 @@ function renderJoinCodeScreen() {
         render();
     };
     
-    joinBtn.addEventListener('click', attemptJoin);
-    backBtn.addEventListener('click', () => {
+    document.getElementById('submit-join-btn').onclick = attemptJoin;
+    document.getElementById('back-action-btn').onclick = () => {
         currentScreen = 'action';
         render();
-    });
-    codeInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') attemptJoin(); });
-    codeInput.focus();
+    };
+    codeInput.onkeypress = (e) => { if(e.key === 'Enter') attemptJoin(); };
+    setTimeout(() => codeInput.focus(), 100);
 }
 
 function renderChatScreen() {
@@ -203,6 +187,7 @@ function renderChatScreen() {
         return;
     }
     
+    const root = document.getElementById('app-root');
     let messages = getRoomMessages(activeRoomCode);
     
     root.innerHTML = `
@@ -224,6 +209,12 @@ function renderChatScreen() {
     const sendBtn = document.getElementById('send-msg-btn');
     const leaveBtn = document.getElementById('leave-chat-btn');
     
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
     function renderMessages(msgsArray) {
         if (!messagesDiv) return;
         messagesDiv.innerHTML = '';
@@ -231,18 +222,12 @@ function renderChatScreen() {
             const msgDiv = document.createElement('div');
             msgDiv.className = `message ${msg.senderName === currentUsername ? 'my-message' : ''}`;
             msgDiv.innerHTML = `
-                <div class="sender">${msg.senderName === currentUsername ? 'you' : msg.senderName}</div>
+                <div class="sender">${msg.senderName === currentUsername ? 'you' : escapeHtml(msg.senderName)}</div>
                 <div class="text">${escapeHtml(msg.text)}</div>
             `;
             messagesDiv.appendChild(msgDiv);
         });
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
-    }
-    
-    function escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
     }
     
     renderMessages(messages);
@@ -262,8 +247,8 @@ function renderChatScreen() {
         renderMessages(fresh);
     }
     
-    sendBtn.addEventListener('click', sendMessage);
-    messageInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') sendMessage(); });
+    sendBtn.onclick = sendMessage;
+    messageInput.onkeypress = (e) => { if(e.key === 'Enter') sendMessage(); };
     
     const syncUpdate = (updatedMessages) => {
         renderMessages(updatedMessages);
@@ -271,22 +256,45 @@ function renderChatScreen() {
     
     startRoomSync(activeRoomCode, syncUpdate);
     
-    leaveBtn.addEventListener('click', () => {
+    leaveBtn.onclick = () => {
         stopRoomSync();
         activeRoomCode = null;
         currentScreen = 'action';
         render();
-    });
+    };
     
-    messageInput.focus();
+    setTimeout(() => messageInput.focus(), 100);
 }
 
-// Initialize app
-document.addEventListener('DOMContentLoaded', () => {
-    render();
-});
+// MAIN RENDER FUNCTION
+function render() {
+    const root = document.getElementById('app-root');
+    if (!root) {
+        console.error('Root element not found!');
+        return;
+    }
+    
+    if (currentScreen === 'username') {
+        renderUsernameScreen();
+    } else if (currentScreen === 'action') {
+        renderActionScreen();
+    } else if (currentScreen === 'joinCodeInput') {
+        renderJoinCodeScreen();
+    } else if (currentScreen === 'chat') {
+        renderChatScreen();
+    }
+}
 
-// Reset on page load to ensure clean state
+// START THE APP
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        render();
+    });
+} else {
+    render();
+}
+
+// Reset on page load
 window.addEventListener('load', () => {
     if (activeRoomCode && currentScreen !== 'chat') {
         activeRoomCode = null;
