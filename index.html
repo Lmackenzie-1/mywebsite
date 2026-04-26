@@ -2,14 +2,25 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>GhostChat · private rooms</title>
     <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Fallback styles in case CSS doesn't load */
+        body { 
+            background: black; 
+            margin: 0; 
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+        #app-root { 
+            width: 100%; 
+            height: 100vh; 
+        }
+    </style>
 </head>
 <body>
-    <!-- ROOT: dynamic screens -->
     <div id="app-root"></div>
-
     <script src="app.js"></script>
 </body>
 </html>
