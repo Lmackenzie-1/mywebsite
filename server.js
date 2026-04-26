@@ -1,56 +1,66 @@
-const express = require('express');
-const http = require('http');
-const socketIO = require('socket.io');
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  const socket = io();
 
-const app = express();
-const server = http.createServer(app);
-const io = socketIO(server);
+  let chatCode = '';
+  let joined = false;
 
-const PORT = 3000;
+  const createBtn = document.getElementById('createChatBtn');
+  const joinBtn = document.getElementById('joinChatBtn');
+  const chatContainer = document.getElementById('chatContainer');
+  const chatBox = document.getElementById('chatBox');
+  const messageInput = document.getElementById('messageInput');
+  const sendBtn = document.getElementById('sendBtn');
+  const leaveBtn = document.getElementById('leaveBtn');
 
-// Store chat rooms and their sockets
-const chatRooms = {};
+  createBtn.onclick = () => {
+    chatCode = Math.random().toString(36).substr(2, 6).toUpperCase();
+    alert('Your chat code: ' + chatCode);
+    joinChat();
+  };
 
-io.on('connection', (socket) => {
-  console.log('A user connected');
-
-  socket.on('joinRoom', (chatCode) => {
-    // Join the room
-    socket.join(chatCode);
-    if (!chatRooms[chatCode]) {
-      chatRooms[chatCode] = [];
+  joinBtn.onclick = () => {
+    chatCode = prompt('Enter chat code:');
+    if (chatCode) {
+      joinChat();
     }
-    chatRooms[chatCode].push(socket.id);
-    console.log(`Socket ${socket.id} joined room ${chatCode}`);
-  });
+  };
 
-  socket.on('leaveRoom', (chatCode) => {
-    socket.leave(chatCode);
-    if (chatRooms[chatCode]) {
-      chatRooms[chatCode] = chatRooms[chatCode].filter(id => id !== socket.id);
-      if (chatRooms[chatCode].length === 0) {
-        delete chatRooms[chatCode];
-      }
+  function joinChat() {
+    socket.emit('joinRoom', chatCode);
+    joined = true;
+    document.querySelector('.chat-options').classList.add('hidden');
+    chatContainer.classList.remove('hidden');
+  }
+
+  sendBtn.onclick = () => {
+    const message = messageInput.value.trim();
+    if (message && joined) {
+      socket.emit('message', { chatCode, message });
+      const messageElem = document.createElement('div');
+      messageElem.className = 'message sent';
+      messageElem.innerText = message;
+      chatBox.appendChild(messageElem);
+      messageInput.value = '';
+      chatBox.scrollTop = chatBox.scrollHeight;
     }
+  };
+
+  socket.on('message', (message) => {
+    const reply = document.createElement('div');
+    reply.className = 'message received';
+    reply.innerText = message;
+    chatBox.appendChild(reply);
+    chatBox.scrollTop = chatBox.scrollHeight;
   });
 
-  socket.on('message', ({ chatCode, message }) => {
-    // Broadcast message to room
-    io.to(chatCode).emit('message', message);
-  });
-
-  socket.on('disconnect', () => {
-    // Cleanup if necessary
-    for (const chatCode in chatRooms) {
-      chatRooms[chatCode] = chatRooms[chatCode].filter(id => id !== socket.id);
-      if (chatRooms[chatCode].length === 0) {
-        delete chatRooms[chatCode];
-      }
+  leaveBtn.onclick = () => {
+    if (joined) {
+      socket.emit('leaveRoom', chatCode);
+      joined = false;
     }
-    console.log('A user disconnected');
-  });
-});
-
-server.listen(PORT, () => {
-  console.log(`Server listening on port ${PORT}`);
-});
+    document.querySelector('.chat-options').classList.remove('hidden');
+    chatContainer.classList.add('hidden');
+    chatBox.innerHTML = '';
+  };
+</script>
