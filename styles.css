@@ -1,14 +1,13 @@
-/* styles.css – sleek dark immersive UI */
+/* styles.css - fixed for Chromebook/Chrome */
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    user-select: none; /* slightly cleaner on mobile, but input still editable */
 }
 
 body {
-    background: black;
-    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, sans-serif;
+    background: #000000;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
     height: 100vh;
     width: 100vw;
     overflow: hidden;
@@ -27,90 +26,68 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    transition: opacity 0.2s ease;
     overflow-y: auto;
-    padding: 1.5rem;
+    padding: 20px;
 }
 
 .hidden {
-    display: none;
-}
-
-/* custom scrollbar */
-::-webkit-scrollbar {
-    width: 5px;
-}
-::-webkit-scrollbar-track {
-    background: #1a1a1a;
-}
-::-webkit-scrollbar-thumb {
-    background: #3a3a3a;
-    border-radius: 20px;
+    display: none !important;
 }
 
 /* username card */
 .username-card {
     background: #0c0c0c;
-    border-radius: 2rem;
-    padding: 2rem;
-    width: 100%;
+    border-radius: 32px;
+    padding: 30px 25px;
+    width: 90%;
     max-width: 360px;
     text-align: center;
-    box-shadow: 0 20px 35px -12px rgba(0,0,0,0.7);
     border: 1px solid #242424;
 }
 
 .username-card label {
-    font-size: 1rem;
+    font-size: 16px;
     font-weight: 500;
-    letter-spacing: -0.2px;
     color: #a1a1aa;
     display: block;
-    margin-bottom: 0.75rem;
+    margin-bottom: 12px;
 }
 
 .grey-textbox {
     background: #1f1f1f;
     border: 1px solid #2e2e2e;
     border-radius: 44px;
-    padding: 0.9rem 1.2rem;
+    padding: 12px 18px;
     width: 100%;
-    font-size: 1rem;
+    font-size: 16px;
     color: white;
     outline: none;
-    font-weight: 400;
-    transition: all 0.2s;
-    margin-bottom: 1.2rem;
+    margin-bottom: 20px;
 }
 
 .grey-textbox:focus {
     border-color: #5c5cff;
     background: #262626;
-    box-shadow: 0 0 0 2px rgba(92,92,255,0.2);
 }
 
 button {
     background: #262626;
     border: none;
     font-weight: 600;
-    font-size: 1rem;
-    padding: 0.8rem 1.8rem;
+    font-size: 16px;
+    padding: 12px 24px;
     border-radius: 48px;
     color: white;
     cursor: pointer;
-    transition: 0.15s;
-    font-family: inherit;
     width: 100%;
 }
 
 button.primary {
     background: #3b3bff;
-    box-shadow: 0 2px 8px rgba(59,59,255,0.3);
 }
 
 button.primary:hover {
     background: #5353ff;
-    transform: scale(0.98);
 }
 
 button.secondary {
@@ -118,90 +95,83 @@ button.secondary {
     border: 1px solid #36364a;
 }
 
-button.secondary:hover {
-    background: #2a2a3a;
-}
-
-/* main action screen (create / join) */
+/* action container */
 .action-container {
-    width: 100%;
+    width: 90%;
     max-width: 380px;
     display: flex;
     flex-direction: column;
-    gap: 28px;
-    padding: 1rem;
+    gap: 20px;
+    padding: 20px;
 }
 
 .big-button {
     background: #131313;
     border-radius: 40px;
-    padding: 2rem 1rem;
-    font-size: 1.7rem;
+    padding: 30px 20px;
+    font-size: 24px;
     font-weight: 700;
-    width: 100%;
-    text-align: center;
-    transition: all 0.2s;
     border: 1px solid #2c2c2c;
-    box-shadow: 0 10px 20px -5px rgba(0,0,0,0.5);
 }
 
-.big-button:active {
-    transform: scale(0.97);
-    background: #1c1c1c;
-}
-
-/* enter code panel (popup style inside same screen) */
+/* code panel */
 .code-panel {
     background: #0a0a0a;
-    border-radius: 2.5rem;
-    padding: 2rem;
-    width: 100%;
+    border-radius: 40px;
+    padding: 30px 25px;
+    width: 90%;
     max-width: 380px;
     border: 1px solid #2a2a2a;
-    margin-top: 1rem;
+}
+
+.code-panel h3 {
+    margin-bottom: 10px;
+    font-size: 18px;
 }
 
 .code-panel input {
-    margin: 0.8rem 0 1.2rem;
+    margin: 15px 0 20px;
 }
 
-/* chat room UI */
+/* chat UI */
 .chat-header {
     background: #050505;
     width: 100%;
-    padding: 1rem 1.5rem;
+    padding: 15px 20px;
     display: flex;
-    align-items: baseline;
+    align-items: center;
     justify-content: space-between;
     flex-wrap: wrap;
     border-bottom: 1px solid #252525;
-    position: sticky;
+    position: fixed;
     top: 0;
+    left: 0;
     z-index: 10;
 }
 
 .room-info {
-    font-size: 0.85rem;
+    font-size: 12px;
     background: #1b1b1b;
-    padding: 0.4rem 0.8rem;
+    padding: 5px 10px;
     border-radius: 50px;
     font-family: monospace;
-    letter-spacing: 0.5px;
 }
 
 .leave-btn {
     background: #2c2c2c;
     width: auto;
-    padding: 0.5rem 1.2rem;
-    font-size: 0.8rem;
-    border-radius: 40px;
+    padding: 8px 18px;
+    font-size: 14px;
 }
 
 .messages-area {
-    flex: 1;
-    width: 100%;
+    position: fixed;
+    top: 70px;
+    bottom: 70px;
+    left: 0;
+    right: 0;
     overflow-y: auto;
-    padding: 1.2rem 1rem;
+    padding: 15px;
     display: flex;
     flex-direction: column;
     gap: 12px;
@@ -210,43 +180,37 @@ button.secondary:hover {
 
 .message {
     max-width: 80%;
-    padding: 0.7rem 1rem;
-    border-radius: 1.8rem;
+    padding: 10px 15px;
+    border-radius: 20px;
     line-height: 1.4;
-    font-size: 0.95rem;
+    font-size: 14px;
     word-wrap: break-word;
     background: #151515;
     align-self: flex-start;
-    border-bottom-left-radius: 0.3rem;
 }
 
 .message.my-message {
     background: #2c2c7a;
-    color: white;
     align-self: flex-end;
-    border-bottom-right-radius: 0.3rem;
-    border-bottom-left-radius: 1.2rem;
 }
 
 .message .sender {
-    font-size: 0.7rem;
+    font-size: 11px;
     font-weight: 600;
     color: #b9b9ff;
-    margin-bottom: 4px;
-    opacity: 0.9;
-}
-
-.message .text {
-    word-break: break-word;
+    margin-bottom: 5px;
 }
 
 .chat-input-area {
     background: #0c0c0c;
-    padding: 1rem;
+    padding: 12px;
     border-top: 1px solid #222;
     display: flex;
     gap: 12px;
-    width: 100%;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
 }
 
 .chat-input-area input {
@@ -254,28 +218,25 @@ button.secondary:hover {
     background: #1c1c1c;
     border: 1px solid #343434;
     border-radius: 44px;
-    padding: 0.85rem 1.2rem;
+    padding: 12px 18px;
     color: white;
-    font-size: 0.95rem;
+    font-size: 14px;
     outline: none;
 }
 
 .chat-input-area button {
     width: auto;
-    padding: 0 1.8rem;
+    padding: 0 25px;
     background: #3b3bff;
-}
-
-/* utility */
-.text-center {
-    text-align: center;
-}
-
-.mt-3 {
-    margin-top: 1rem;
 }
 
 small {
     color: #6b6b7a;
     display: block;
+    margin-top: 20px;
+    font-size: 12px;
+}
+
+.text-center {
+    text-align: center;
 }
