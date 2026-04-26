@@ -1,59 +1,44 @@
-// app.js — realtime chat via BroadcastChannel API (cross-tab / local device)
-// For fully real communication between two different browsers/windows we use BroadcastChannel + localStorage sync?
-// Wait: BroadcastChannel works only for same-origin same-device across tabs/windows.
-// But requirement: "fully real communication person A and B" — needs backend or P2P? simplified: use mock signaling + localStorage event (cross-tab)
-// Actually we need cross-device? requirement doesn't specify different devices, but "someone get code" typical real app requires server.
-// However due to environment restrictions (no backend) we implement a durable WebSocket simulation using localStorage + 'storage' event
-// plus visibility + sync. This works across different tabs/windows on SAME device, but for true cross-device we'd need signaling.
-// But given the prompt: "fully real communication" — we can build with localStorage bridge that updates across any window with same origin.
-// It's fully functional across tabs/windows on same computer. To mimic real chatting between two people (separate browsers) they need to be on same machine? Not ideal.
-// Instead: I will implement with IndexedDB? Not needed. Because we don't have external server, I'll use localStorage and 'storage' event to simulate realtime.
-// This works perfectly: creator & joiner on same device or across browsers opened on same device — still 'real communication' for demo.
-// Alternatively we embed mock UUID and synchronized messages.
-// For robustness, each chat room uses unique channel key: chat_room_{roomCode}
-// Each message saves into localStorage, then triggers storage event on all tabs.
-// That gives REAL cross-tab instant messaging! Perfect for requirement.
+// app.js - Fixed for Chromebook/Chrome compatibility
 
-// ---------- STATE ----------
-let currentScreen = 'username'; // username, action, joinCodeInput, chat
+// STATE
+let currentScreen = 'username';
 let currentUsername = '';
-let activeRoomCode = null;     // code of joined/created room
-let activeRoomListener = null; // storage event handler reference
+let activeRoomCode = null;
+let activeRoomListener = null;
 let messagePollInterval = null;
 
 // DOM root
 const root = document.getElementById('app-root');
 
-// Helper render functions
-function render() {
-    if (currentScreen === 'username') renderUsernameScreen();
-    else if (currentScreen === 'action') renderActionScreen();
-    else if (currentScreen === 'joinCodeInput') renderJoinCodeScreen();
-    else if (currentScreen === 'chat') renderChatScreen();
-}
-
-// ---------- UTILS ----------
+// Helper functions
 function generateRoomCode() {
     return Math.random().toString(36).substring(2, 8).toUpperCase();
 }
 
-// store messages to localStorage under "chatroom_{roomCode}_messages"
 function getRoomMessages(roomCode) {
-    const key = `chatroom_${roomCode}_messages`;
-    const raw = localStorage.getItem(key);
-    return raw ? JSON.parse(raw) : [];
+    try {
+        const key = `chatroom_${roomCode}_messages`;
+        const raw = localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : [];
+    } catch(e) {
+        console.error('Error loading messages:', e);
+        return [];
+    }
 }
 
 function saveRoomMessages(roomCode, messages) {
-    const key = `chatroom_${roomCode}_messages`;
-    localStorage.setItem(key, JSON.stringify(messages));
-    // trigger explicit storage event to other tabs (already automatic, but force identical)
-    window.dispatchEvent(new StorageEvent('storage', {
-        key: key,
-        newValue: JSON.stringify(messages),
-        oldValue: null,
-        storageArea: localStorage
-    }));
+    try {
+        const key = `chatroom_${roomCode}_messages`;
+        localStorage.setItem(key, JSON.stringify(messages));
+        // Trigger storage event manually
+        window.dispatchEvent(new StorageEvent('storage', {
+            key: key,
+            newValue: JSON.stringify(messages),
+            storageArea: localStorage
+        }));
+    } catch(e) {
+        console.error('Error saving messages:', e);
+    }
 }
 
 function addMessageToRoom(roomCode, messageObj) {
@@ -62,12 +47,12 @@ function addMessageToRoom(roomCode, messageObj) {
     saveRoomMessages(roomCode, msgs);
 }
 
-// listen to changes on active room
 function startRoomSync(roomCode, onMessageUpdate) {
     if (activeRoomListener) {
         window.removeEventListener('storage', activeRoomListener);
         if (messagePollInterval) clearInterval(messagePollInterval);
     }
+    
     const storageKey = `chatroom_${roomCode}_messages`;
     const handler = (e) => {
         if (e.key === storageKey && e.newValue) {
@@ -77,14 +62,16 @@ function startRoomSync(roomCode, onMessageUpdate) {
             } catch(err) { console.warn(err); }
         }
     };
+    
     window.addEventListener('storage', handler);
     activeRoomListener = handler;
-    // also poll for safety (edge cases)
+    
+    // Polling fallback
     if (messagePollInterval) clearInterval(messagePollInterval);
     messagePollInterval = setInterval(() => {
         const fresh = getRoomMessages(roomCode);
         onMessageUpdate(fresh);
-    }, 800);
+    }, 1000);
 }
 
 function stopRoomSync() {
@@ -98,27 +85,42 @@ function stopRoomSync() {
     }
 }
 
-// ---------- SCREENS RENDER ----------
+// Render functions
+function render() {
+    if (!root) {
+        console.error('Root element not found!');
+        return;
+    }
+    
+    if (currentScreen === 'username') renderUsernameScreen();
+    else if (currentScreen === 'action') renderActionScreen();
+    else if (currentScreen === 'joinCodeInput') renderJoinCodeScreen();
+    else if (currentScreen === 'chat') renderChatScreen();
+}
+
 function renderUsernameScreen() {
     root.innerHTML = `
-        <div class="screen" id="username-screen">
+        <div class="screen">
             <div class="username-card">
-                <label>⚡ enter your callsign</label>
-                <input type="text" id="username-input" class="grey-textbox" placeholder="enter username" autocomplete="off" maxlength="24">
-                <button id="join-username-btn" class="primary">enter chat lobby →</button>
-                <small style="margin-top: 12px;">no signup, just pick a name</small>
+                <label>✨ ENTER USERNAME</label>
+                <input type="text" id="username-input" class="grey-textbox" placeholder="username" autocomplete="off" maxlength="24">
+                <button id="join-username-btn" class="primary">START CHATTING →</button>
+                <small>pick any name to begin</small>
             </div>
         </div>
     `;
+    
     const input = document.getElementById('username-input');
     const btn = document.getElementById('join-username-btn');
+    
     const handleJoin = () => {
         let name = input.value.trim();
-        if (name === "") name = "guest_" + Math.floor(Math.random()*1000);
+        if (name === "") name = "guest_" + Math.floor(Math.random() * 1000);
         currentUsername = name;
         currentScreen = 'action';
         render();
     };
+    
     btn.addEventListener('click', handleJoin);
     input.addEventListener('keypress', (e) => { if(e.key === 'Enter') handleJoin(); });
     input.focus();
@@ -126,26 +128,26 @@ function renderUsernameScreen() {
 
 function renderActionScreen() {
     root.innerHTML = `
-        <div class="screen" id="action-screen">
+        <div class="screen">
             <div class="action-container">
                 <button id="create-chat-btn" class="big-button primary">✨ CREATE CHAT</button>
                 <button id="enter-code-btn" class="big-button secondary">🔑 ENTER CODE</button>
             </div>
-            <small style="margin-top: 2rem;">create a room → share code → friend joins</small>
+            <small>create a room → share code → friend joins</small>
         </div>
     `;
+    
     document.getElementById('create-chat-btn').addEventListener('click', () => {
         const newCode = generateRoomCode();
-        // validate that room messages are clean, init empty array
         const key = `chatroom_${newCode}_messages`;
         if (!localStorage.getItem(key)) {
             saveRoomMessages(newCode, []);
         }
         activeRoomCode = newCode;
-        // join as creator directly to chat
         currentScreen = 'chat';
         render();
     });
+    
     document.getElementById('enter-code-btn').addEventListener('click', () => {
         currentScreen = 'joinCodeInput';
         render();
@@ -154,15 +156,16 @@ function renderActionScreen() {
 
 function renderJoinCodeScreen() {
     root.innerHTML = `
-        <div class="screen" id="join-code-screen">
+        <div class="screen">
             <div class="code-panel">
-                <h3 style="margin-bottom: 0.5rem;">✧ join secret chat ✧</h3>
-                <input type="text" id="room-code-input" class="grey-textbox" placeholder="room code e.g. A3F9K2" autocomplete="off" maxlength="10" style="text-transform:uppercase">
-                <button id="submit-join-btn" class="primary">join room →</button>
-                <button id="back-action-btn" class="secondary" style="margin-top: 12px;">↩ back</button>
+                <h3>🔐 JOIN ROOM</h3>
+                <input type="text" id="room-code-input" class="grey-textbox" placeholder="Enter room code (e.g., A3F9K2)" autocomplete="off" maxlength="10" style="text-transform:uppercase">
+                <button id="submit-join-btn" class="primary">JOIN →</button>
+                <button id="back-action-btn" class="secondary" style="margin-top:12px">← BACK</button>
             </div>
         </div>
     `;
+    
     const codeInput = document.getElementById('room-code-input');
     const joinBtn = document.getElementById('submit-join-btn');
     const backBtn = document.getElementById('back-action-btn');
@@ -170,20 +173,20 @@ function renderJoinCodeScreen() {
     const attemptJoin = () => {
         let rawCode = codeInput.value.trim().toUpperCase();
         if (!rawCode) {
-            alert("please enter a room code");
+            alert("Please enter a room code");
             return;
         }
         const roomKey = `chatroom_${rawCode}_messages`;
         const roomExists = localStorage.getItem(roomKey) !== null;
         if (!roomExists) {
-            alert(`❌ room "${rawCode}" does not exist. Make sure the code is correct.`);
+            alert(`❌ Room "${rawCode}" doesn't exist. Check the code.`);
             return;
         }
-        // valid code → join chat
         activeRoomCode = rawCode;
         currentScreen = 'chat';
         render();
     };
+    
     joinBtn.addEventListener('click', attemptJoin);
     backBtn.addEventListener('click', () => {
         currentScreen = 'action';
@@ -193,71 +196,57 @@ function renderJoinCodeScreen() {
     codeInput.focus();
 }
 
-// chat screen with message rendering and sending
 function renderChatScreen() {
     if (!activeRoomCode) {
-        // fallback
         currentScreen = 'action';
         render();
         return;
     }
-    // load existing messages
+    
     let messages = getRoomMessages(activeRoomCode);
     
-    // function to refresh messages in UI
-    let currentMessageList = [...messages];
-    
-    // create container
-    const container = document.createElement('div');
-    container.className = 'screen';
-    container.id = 'chat-screen';
-    
-    // inner html structure dynamic, we will populate messages dynamically
-    const headerHtml = `
-        <div class="chat-header">
-            <div><strong>💬 room: ${activeRoomCode}</strong> <span class="room-info">${currentUsername}</span></div>
-            <button id="leave-chat-btn" class="leave-btn">🚪 leave room</button>
-        </div>
-        <div id="messages-container" class="messages-area"></div>
-        <div class="chat-input-area">
-            <input type="text" id="chat-message-input" placeholder="type something..." autocomplete="off">
-            <button id="send-msg-btn">➤ send</button>
+    root.innerHTML = `
+        <div class="screen">
+            <div class="chat-header">
+                <div><strong>💬 ROOM: ${activeRoomCode}</strong> <span class="room-info">${currentUsername}</span></div>
+                <button id="leave-chat-btn" class="leave-btn">🚪 LEAVE</button>
+            </div>
+            <div id="messages-container" class="messages-area"></div>
+            <div class="chat-input-area">
+                <input type="text" id="chat-message-input" placeholder="Type a message..." autocomplete="off">
+                <button id="send-msg-btn">SEND</button>
+            </div>
         </div>
     `;
-    container.innerHTML = headerHtml;
-    root.innerHTML = '';
-    root.appendChild(container);
     
     const messagesDiv = document.getElementById('messages-container');
     const messageInput = document.getElementById('chat-message-input');
     const sendBtn = document.getElementById('send-msg-btn');
     const leaveBtn = document.getElementById('leave-chat-btn');
     
-    // render messages function for this room
     function renderMessages(msgsArray) {
         if (!messagesDiv) return;
         messagesDiv.innerHTML = '';
         (msgsArray || []).forEach(msg => {
             const msgDiv = document.createElement('div');
             msgDiv.className = `message ${msg.senderName === currentUsername ? 'my-message' : ''}`;
-            const senderSpan = document.createElement('div');
-            senderSpan.className = 'sender';
-            senderSpan.innerText = msg.senderName === currentUsername ? 'you' : msg.senderName;
-            const textSpan = document.createElement('div');
-            textSpan.className = 'text';
-            textSpan.innerText = msg.text;
-            msgDiv.appendChild(senderSpan);
-            msgDiv.appendChild(textSpan);
+            msgDiv.innerHTML = `
+                <div class="sender">${msg.senderName === currentUsername ? 'you' : msg.senderName}</div>
+                <div class="text">${escapeHtml(msg.text)}</div>
+            `;
             messagesDiv.appendChild(msgDiv);
         });
-        // auto scroll to bottom
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
     }
     
-    // initial render
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
     renderMessages(messages);
     
-    // send message handler
     function sendMessage() {
         const text = messageInput.value.trim();
         if (!text) return;
@@ -269,79 +258,40 @@ function renderChatScreen() {
         };
         addMessageToRoom(activeRoomCode, messageObj);
         messageInput.value = '';
-        messageInput.focus();
-        // local update will be triggered by storage event, but we also manually update to avoid delay
         const fresh = getRoomMessages(activeRoomCode);
         renderMessages(fresh);
     }
     
     sendBtn.addEventListener('click', sendMessage);
-    messageInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') sendMessage();
-    });
+    messageInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') sendMessage(); });
     
-    // sync when external storage changes
     const syncUpdate = (updatedMessages) => {
-        if (updatedMessages) renderMessages(updatedMessages);
-        else {
-            const currentMsgs = getRoomMessages(activeRoomCode);
-            renderMessages(currentMsgs);
-        }
+        renderMessages(updatedMessages);
     };
     
     startRoomSync(activeRoomCode, syncUpdate);
     
     leaveBtn.addEventListener('click', () => {
-        // cleanup sync and go to action screen
         stopRoomSync();
         activeRoomCode = null;
         currentScreen = 'action';
         render();
     });
     
-    // Add small cleanup when window unload but not necessary
-    const beforeUnloadHandler = () => {
-        // optional: no persistence removal needed
-    };
-    window.addEventListener('beforeunload', beforeUnloadHandler);
-    // store detach function for safety on re-render
-    container.cleanupChat = () => {
-        window.removeEventListener('beforeunload', beforeUnloadHandler);
-        stopRoomSync();
-    };
-    // hack: override potential re-render to clean up later: but screen is replaced anyway
+    messageInput.focus();
 }
 
-// override global render safety: when rendering chat we need to ensure old sync destroyed before new
-// keep track of pending interval
-const originalRender = render;
-window.render = function() {
-    if (currentScreen !== 'chat' && activeRoomListener) {
-        stopRoomSync();
-    }
-    originalRender();
-}.bind(this);
+// Initialize app
+document.addEventListener('DOMContentLoaded', () => {
+    render();
+});
 
-// patch to avoid leaving sync active
-render = function() {
-    if (currentScreen !== 'chat' && activeRoomListener) {
-        stopRoomSync();
-    }
-    originalRender();
-};
-
-// start app
-render();
-
-// extra: if user refreshes, persist which screen? we don't persist because no session, but fine.
-// to make it robust for demo, plus handle edge with room code validity when refresh
+// Reset on page load to ensure clean state
 window.addEventListener('load', () => {
-    // if we accidentally left active room code but no UI, reset
     if (activeRoomCode && currentScreen !== 'chat') {
         activeRoomCode = null;
         if (activeRoomListener) stopRoomSync();
     }
-    // For comfort, initial screen = username (fresh)
     currentScreen = 'username';
     currentUsername = '';
     activeRoomCode = null;
